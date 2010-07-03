@@ -22,8 +22,10 @@ class RatioSpec extends Specification with ScalaCheck {
         Ratio(p._1, p._2) must_== Ratio(p._3, p._4)
       }
     }
+  }
+  "Ratios" should {
     "Allow any input" in {
-      genIntRatio must pass{ r: IntRatio => { true } }(set(minTestsOk -> 10000, maxDiscarded -> 5000, workers -> 4))
+      genRatio must pass{ r: Ratio => { true } }(set(minTestsOk -> 100000, maxDiscarded -> 5000, workers -> 4))
     }
   }
 }
