@@ -8,8 +8,6 @@ class RatioProject(info: ProjectInfo) extends DefaultProject(info) {
                                   "Fyrie Releases" at "http://repo.fyrie.net/releases/",
                                   "Fyrie Snapshots" at "http://repo.fyrie.net/snapshots/")
 
-  val apacheMath = "org.apache.commons" % "commons-math" % "2.1"
-
   val specs = "org.scala-tools.testing" %% "specs" % "1.6.5-SNAPSHOT" % "test"
   val scalacheck = "org.scala-tools.testing" %% "scalacheck" % "1.7" % "test->default"
 

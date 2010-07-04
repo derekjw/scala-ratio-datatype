@@ -1,35 +1,7 @@
 package net.fyrie
 package ratio
 
-import org.apache.commons.math.util.MathUtils
-
-import math.Numeric._
-
 object Ratio {
-
-  def apply(n: Int, d: Int): IntRatio = {
-    val m = if (d < 0) (-1) else 1
-    val g = if (n == 1 || d == 1) (1) else (MathUtils.gcd(n, d))
-      if (g == 0) (new IntRatio(0,0)) else (new IntRatio(m * n / g, m * d / g))
-  }
-
-  def apply(n: Int): IntRatio = apply(n, 1)
-
-  def apply(n: Long, d: Long): LongRatio = {
-    val m = if (d < 0) (-1) else 1
-    val g = if (n == 1 || d == 1) (1) else (MathUtils.gcd(n, d))
-      if (g == 0) (new LongRatio(0,0)) else (new LongRatio(m * n / g, m * d / g))
-  }
-
-  def apply(n: Long): LongRatio = apply(n, 1)
-
-  def apply(n: BigInt, d: BigInt): BigRatio = {
-    val m: BigInt = if (d < 0) (-1) else 1
-    val g: BigInt = if (n == 1 || d == 1) (1) else (n.gcd(d))
-      if (g == 0) (new BigRatio(0,0)) else (new BigRatio(m * n / g, m * d / g))
-  }
-
-  def apply(n: BigInt): BigRatio = apply(n, 1)
 
   def apply(in: String): Ratio =
     in.split("/").toList match {
@@ -37,6 +9,26 @@ object Ratio {
       case n :: Nil => optimize(apply(BigInt(n)))
       case _ => apply(0)
     }
+
+  def apply[T: Integral](n: T): Ratio = apply(n, implicitly[Integral[T]].one)
+
+  def apply[T: Integral](n: T, d: T): Ratio = {
+    val integral: Integral[T] = implicitly
+    import integral._
+
+    implicit def int2T(in: Int): T = fromInt(in)
+    
+    def gcd(x: T, y: T): T = if (x == 0) y else gcd(y % x, x)
+
+    val m: T = if (d < 0) (-1) else 1
+    val g: T = if (n == 1 || d == 1) (1) else (gcd(abs(n), abs(d)))
+
+    (if (g == 0) ((0,0)) else ((m * n / g, m * d / g))) match {
+      case (x: Int, y: Int) => new IntRatio(x, y)
+      case (x: Long, y: Long) => new LongRatio(x, y)
+      case (x: BigInt, y: BigInt) => new BigRatio(x, y)
+    }
+  }
 
   def unapply(in: Any): Option[(Any,Any)] = in match {
     case IntRatio(n, d) => Some((n, d))
@@ -53,13 +45,14 @@ object Ratio {
 }
 
 sealed abstract class Ratio extends Ordered[Ratio] {
-  type T
+  type NumberType
 
-  val n: T
+  val n: NumberType
 
-  val d: T
+  val d: NumberType
 
-  protected val ops: Integral[T]
+  val integral: Integral[NumberType]
+  import integral._
 
   def compare(that: Ratio): Int = toBigRatio.compare(that.toBigRatio)
 
@@ -68,24 +61,14 @@ sealed abstract class Ratio extends Ordered[Ratio] {
   def +(that: Ratio): Ratio = Ratio.optimize(toBigRatio + that.toBigRatio)
   def -(that: Ratio): Ratio = Ratio.optimize(toBigRatio - that.toBigRatio)
 
-  def *(that: Int): Ratio = this * Ratio(that)
-  def /(that: Int): Ratio = this / Ratio(that)
-  def +(that: Int): Ratio = this + Ratio(that)
-  def -(that: Int): Ratio = this - Ratio(that)
+  def *[T: Integral](that: T): Ratio = this * Ratio(that)
+  def /[T: Integral](that: T): Ratio = this / Ratio(that)
+  def +[T: Integral](that: T): Ratio = this + Ratio(that)
+  def -[T: Integral](that: T): Ratio = this - Ratio(that)
 
-  def *(that: Long): Ratio = this * Ratio(that)
-  def /(that: Long): Ratio = this / Ratio(that)
-  def +(that: Long): Ratio = this + Ratio(that)
-  def -(that: Long): Ratio = this - Ratio(that)
+  override def toString = if (gt(d, one)) (n.toString + " / " + d.toString) else (n.toString)
 
-  def *(that: BigInt): Ratio = this * Ratio(that)
-  def /(that: BigInt): Ratio = this / Ratio(that)
-  def +(that: BigInt): Ratio = this + Ratio(that)
-  def -(that: BigInt): Ratio = this - Ratio(that)
-
-  override def toString = if (ops.gt(d, ops.one)) (n.toString + " / " + d.toString) else (n.toString)
-
-  override def hashCode: Int = 37 * (37 * 17 * ops.toInt(ops.rem(n, ops.fromInt(Int.MaxValue)))) * ops.toInt(ops.rem(d, ops.fromInt(Int.MaxValue)))
+  override def hashCode: Int = 37 * (37 * 17 * toInt(rem(n, fromInt(Int.MaxValue)))) * toInt(rem(d, fromInt(Int.MaxValue)))
 
   override def equals(in: Any): Boolean = in match {
     case Ratio(a,b) if n == a && d == b => true
@@ -98,9 +81,9 @@ sealed abstract class Ratio extends Ordered[Ratio] {
 
   def isBig: Boolean = false
 
-  def toIntRatio = new IntRatio(ops.toInt(n), ops.toInt(d))
+  def toIntRatio = new IntRatio(toInt(n), toInt(d))
 
-  def toLongRatio = new LongRatio(ops.toLong(n), ops.toLong(d))
+  def toLongRatio = new LongRatio(toLong(n), toLong(d))
 
   def toBigRatio: BigRatio
 
@@ -114,9 +97,9 @@ object IntRatio {
 }
 
 class IntRatio(numer: Int, denom: Int) extends Ratio {
-  type T = Int
+  type NumberType = Int
 
-  val ops = IntIsIntegral
+  val integral = implicitly[Integral[NumberType]]
 
   val n = numer
 
@@ -137,9 +120,9 @@ object LongRatio {
 }
 
 class LongRatio(numer: Long, denom: Long) extends Ratio {
-  type T = Long
+  type NumberType = Long
 
-  val ops = LongIsIntegral
+  val integral = implicitly[Integral[NumberType]]
 
   val n = numer
 
@@ -160,18 +143,18 @@ object BigRatio {
 }
 
 class BigRatio(numer: BigInt, denom: BigInt) extends Ratio {
-  type T = BigInt
+  type NumberType = BigInt
 
-  val ops = BigIntIsIntegral
+  val integral = implicitly[Integral[NumberType]]
 
   val n = numer
 
   val d = denom
 
-  def *(that: BigRatio): BigRatio = Ratio(n * that.n, d * that.d)
-  def /(that: BigRatio): BigRatio = Ratio(n * that.d, d * that.n)
-  def +(that: BigRatio): BigRatio = Ratio((n * that.d) + (that.n * d), d * that.d)
-  def -(that: BigRatio): BigRatio = Ratio((n * that.d) - (that.n * d), d * that.d)
+  def *(that: BigRatio): Ratio = Ratio(n * that.n, d * that.d)
+  def /(that: BigRatio): Ratio = Ratio(n * that.d, d * that.n)
+  def +(that: BigRatio): Ratio = Ratio((n * that.d) + (that.n * d), d * that.d)
+  def -(that: BigRatio): Ratio = Ratio((n * that.d) - (that.n * d), d * that.d)
 
   def compare(that: BigRatio): Int = (n * that.d).compare(that.n * d)
 

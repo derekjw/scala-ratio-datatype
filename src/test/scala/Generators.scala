@@ -20,32 +20,14 @@ object Generators {
     m <- Gen.choose(1,10000)
   } yield (n,d,n*m,d*m)
 
-  def genIntRatio: Gen[IntRatio] = for {
+  def genIntRatio: Gen[Ratio] = for {
     (n, d) <- genIntRatioPair
   } yield Ratio(n,d)
 
-  implicit def arbIntRatio: Arbitrary[IntRatio] =
+  implicit def arbIntRatio: Arbitrary[Ratio] =
     Arbitrary { genIntRatio }
 
-  def genLongRatioPair: Gen[(Long, Long)] = for {
-    n <- arbitrary[Long] suchThat (_ > Long.MinValue)
-    d <- arbitrary[Long] suchThat (_ > Long.MinValue)
-  } yield (n,d)
-
-  def genTwoEqualLongRatioPairs: Gen[(Long, Long, Long, Long)] = for {
-    n <- Gen.choose(-1000000,1000000)
-    d <- Gen.choose(-1000000,1000000)
-    m <- Gen.choose(1,10000000)
-  } yield (n,d,n*m,d*m)
-
-  def genLongRatio: Gen[LongRatio] = for {
-    (n, d) <- genLongRatioPair
-  } yield Ratio(n,d)
-
-  implicit def arbLongRatio: Arbitrary[LongRatio] =
-    Arbitrary { genLongRatio }
-
-  def genRatio: Gen[Ratio] = genIntRatio | genLongRatio
+  def genRatio: Gen[Ratio] = genIntRatio
 
   implicit def arbRatio: Arbitrary[Ratio] =
     Arbitrary { genRatio }
