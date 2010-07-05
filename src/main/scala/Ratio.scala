@@ -23,11 +23,11 @@ object Ratio {
     val m: T = if (d < 0) (-1) else 1
     val g: T = if (n == 1 || d == 1) (1) else (gcd(abs(n), abs(d)))
 
-    (if (g == 0) ((0,0)) else ((m * n / g, m * d / g))) match {
+    optimize((if (g == 0) ((0,0)) else ((m * n / g, m * d / g))) match {
       case (x: Int, y: Int) => new IntRatio(x, y)
       case (x: Long, y: Long) => new LongRatio(x, y)
       case (x: BigInt, y: BigInt) => new BigRatio(x, y)
-    }
+    })
   }
 
   def unapply(in: Any): Option[(Any,Any)] = in match {
