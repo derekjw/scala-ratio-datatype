@@ -7,56 +7,40 @@ import org.scalacheck._
 import Gen._
 import Arbitrary.arbitrary
 
+import collection.IndexedSeq
+
+object Primes {
+  
+  def ints(n: Int): Stream[Int] = Stream.cons(n, ints(n +1))
+  
+  def primes(nums: Stream[Int]): Stream[Int] =
+    Stream.cons(nums.head,
+                primes ((nums tail) filter (x => nums.head != 0)))
+
+  def apply(count: Int) =
+    IndexedSeq[Int]() ++ primes(ints(2)).take(count)
+}
+
 object Generators {
+  val primes = Primes(1000)
+  val smallPrimes = primes.take(20)
 
-  def genIntRatioPair: Gen[(Int, Int)] = for {
-    n <- arbitrary[Int] suchThat (_ > Int.MinValue)
-    d <- arbitrary[Int] suchThat (_ > Int.MinValue)
-  } yield (n,d)
+  def genSmallPrime: Gen[Int] = Gen(params => Some(smallPrimes(params.rng.nextInt(smallPrimes.size))))
+  def genPrime: Gen[Int] = Gen(params => Some(primes(params.rng.nextInt(primes.size))))
 
-  def genTwoEqualIntRatioPairs: Gen[(Int, Int, Int, Int)] = for {
-    n <- Gen.choose(-1000,1000)
-    d <- Gen.choose(-1000,1000)
-    m <- Gen.choose(1,10000)
-  } yield (n,d,n*m,d*m)
+  def genFactors(min: Int, max: Int): Gen[Seq[Int]] = for {
+    size <- Gen.choose(min, max)
+    result <- Gen.listOfN(size, Gen.frequency((1,genPrime),(9,genSmallPrime)))
+  } yield result
 
-  def genIntRatio: Gen[Ratio] = for {
-    (n, d) <- genIntRatioPair
-  } yield Ratio(n,d)
+  def genRatio(factors: Int): Gen[Ratio] = genRatio(1,factors)
 
-  def genLongRatioPair: Gen[(Long, Long)] = for {
-    n <- arbitrary[Long] suchThat (_ > Long.MinValue)
-    d <- arbitrary[Long] suchThat (_ > Long.MinValue)
-  } yield (n,d)
-
-  def genTwoEqualLongRatioPairs: Gen[(Long, Long, Long, Long)] = for {
-    n <- Gen.choose(-1000000,1000000)
-    d <- Gen.choose(-1000000,1000000)
-    m <- Gen.choose(1,10000000)
-  } yield (n,d,n*m,d*m)
-
-  def genLongRatio: Gen[Ratio] = for {
-    (n, d) <- genLongRatioPair
-  } yield Ratio(n,d)
-
-  def genBigRatioPair: Gen[(BigInt, BigInt)] = for {
-    n <- arbitrary[Long]
-    d <- arbitrary[Long]
-  } yield (n,d)
-
-  def genTwoEqualBigRatioPairs: Gen[(BigInt, BigInt, BigInt, BigInt)] = for {
-    n <- Gen.choose(-1000000000000L,100000000000L)
-    d <- Gen.choose(-1000000000000L,100000000000L)
-    m <- Gen.choose(1,10000000000L)
-  } yield (n,d,n*m,d*m)
-
-  def genBigRatio: Gen[Ratio] = for {
-    (n, d) <- genBigRatioPair
-  } yield Ratio(n,d)
-
-  def genRatio: Gen[Ratio] = genIntRatio | genLongRatio | genBigRatio
-
-  implicit def arbRatio: Arbitrary[Ratio] =
-    Arbitrary { genRatio }
-
+  def genRatio(minFactors: Int, maxFactors: Int): Gen[Ratio] = for {
+    n <- genFactors(minFactors, maxFactors)
+    d <- genFactors(minFactors, maxFactors)
+  } yield {
+    n.zip(d).foldLeft(Ratio(1,1)){
+      case (r,(n,d)) => r * Ratio(n,d)
+    }
+  }
 }
