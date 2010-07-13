@@ -11,21 +11,13 @@ import org.scalacheck._
 import org.scalacheck.Prop._
 
 class RatioSpec extends Specification with ScalaCheck {
-/*  "IntRatios" should {
-    "Be equal with the same values" in {
-      genIntRatioPair must pass{ p: (Int, Int) =>
-        Ratio(p._1, p._2) must_== Ratio(p._1, p._2)
-      }
-    }
-    "Be equal after reducing" in {
-      genTwoEqualIntRatioPairs must pass{ p: (Int, Int, Int, Int) =>
-        Ratio(p._1, p._2) must_== Ratio(p._3, p._4)
-      }
-    }
-  }*/
   "Ratios" should {
     "Allow any input" in {
-      genRatio(100) must pass{ r: Ratio => { true } }(display(minTestsOk -> 100000, maxDiscarded -> 1, workers -> 4))
+      genRatio(100) must pass{ r: Ratio => { true } }(display(minTestsOk -> 1000, maxDiscarded -> 1, workers -> 4))
+    }
+    "Perform operations with Ints" in {
+      ((Ratio(2,3) * 3) == 2) must beTrue
+      ((Ratio(2,3) * 4) == 2) must beFalse
     }
   }
 }

@@ -10,14 +10,11 @@ object Ratio {
       case _ => apply(0)
     }
 
-  def apply(n: BigInt): Ratio = apply(n, 1)
+  def apply(n: BigInt): Ratio = new Ratio(n, 1)
 
   def apply(n: BigInt, d: BigInt): Ratio = {
-    
-    def gcd(x: BigInt, y: BigInt): BigInt = if (x == 0) y else gcd(y % x, x)
-
-    val m = if (d < 0) (-1) else 1
-    val g: BigInt = if (n == 1 || d == 1) (1) else (gcd(n.abs, d.abs))
+    val m = d.signum
+    val g: BigInt = if (n == 1 || d == 1) 1 else n.gcd(d)
 
     if (g == 0) (new Ratio(0,0)) else (new Ratio(n * m / g, d * m / g))
   }
@@ -31,10 +28,10 @@ object Ratio {
 
 class Ratio(val n: BigInt, val d: BigInt) extends Ordered[Ratio] {
 
-/*  def *[T: Integral](that: T): Ratio = this * Ratio(that)
-  def /[T: Integral](that: T): Ratio = this / Ratio(that)
-  def +[T: Integral](that: T): Ratio = this + Ratio(that)
-  def -[T: Integral](that: T): Ratio = this - Ratio(that)*/
+  def *[T <% BigInt](that: T): Ratio = this * Ratio(that)
+  def /[T <% BigInt](that: T): Ratio = this / Ratio(that)
+  def +[T <% BigInt](that: T): Ratio = this + Ratio(that)
+  def -[T <% BigInt](that: T): Ratio = this - Ratio(that)
 
   def *(that: Ratio): Ratio = Ratio(n * that.n, d * that.d)
   def /(that: Ratio): Ratio = Ratio(n * that.d, d * that.n)
@@ -45,10 +42,13 @@ class Ratio(val n: BigInt, val d: BigInt) extends Ordered[Ratio] {
 
   override def toString = if (d > 1) (n.toString + " / " + d.toString) else (n.toString)
 
+  def toDouble = n.toDouble / d.toDouble
+
   override def hashCode: Int = 37 * (37 * 17 * (n % BigInt(Int.MaxValue)).toInt) * (d % BigInt(Int.MaxValue)).toInt
 
   override def equals(in: Any): Boolean = in match {
-    case Ratio(a,b) if n == a && d == b => true
+    case r: Ratio => (n == r.n && d == r.d) || (toDouble == r.toDouble)
+    case i: Int => (n == i && d == 1)
     case _ => false
   }
 
