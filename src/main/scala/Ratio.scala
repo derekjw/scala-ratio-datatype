@@ -47,8 +47,10 @@ class Ratio(val n: BigInt, val d: BigInt) extends Ordered[Ratio] {
   override def hashCode: Int = 37 * (37 * 17 * (n % BigInt(Int.MaxValue)).toInt) * (d % BigInt(Int.MaxValue)).toInt
 
   override def equals(in: Any): Boolean = in match {
-    case r: Ratio => (n == r.n && d == r.d) || (toDouble == r.toDouble)
-    case i: Int => (n == i && d == 1)
+    case x: Ratio => (n == x.n && d == x.d) || (toDouble == x.toDouble)
+    case x: Int => n == x && d == 1
+    case x: Long => n == x && d == 1
+    case x: BigInt => n == x && d == 1
     case _ => false
   }
 
