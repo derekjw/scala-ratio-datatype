@@ -25,7 +25,7 @@ class RatioSpec extends Specification with ScalaCheck {
   }*/
   "Ratios" should {
     "Allow any input" in {
-      genRatio(100) must pass{ r: Ratio => { true } }(display(minTestsOk -> 1000, maxDiscarded -> 1, workers -> 4))
+      genRatio(100) must pass{ r: Ratio => { true } }(display(minTestsOk -> 100000, maxDiscarded -> 1, workers -> 4))
     }
   }
 }
