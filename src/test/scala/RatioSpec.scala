@@ -20,4 +20,12 @@ class RatioSpec extends Specification with ScalaCheck {
       ((Ratio(2,3) * 4) == 2) must beFalse
     }
   }
+  "Equality" should {
+      "Ints" in {
+        (Ratio(4,2) == 2) must beTrue
+        (2 == Ratio(4,2)) must beTrue
+        (Ratio(4,3) == 2) must beFalse
+        (2 == Ratio(4,3)) must beFalse
+      }
+  }
 }

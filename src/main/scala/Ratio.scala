@@ -1,6 +1,8 @@
 package net.fyrie
 package ratio
 
+import math.{ScalaNumber, ScalaNumericConversions}
+
 object Ratio {
 
   def apply(in: String): Ratio =
@@ -26,7 +28,7 @@ object Ratio {
 
 }
 
-class Ratio(val n: BigInt, val d: BigInt) extends Ordered[Ratio] {
+class Ratio(val n: BigInt, val d: BigInt) extends ScalaNumber with ScalaNumericConversions with Ordered[Ratio] {
 
   def *[T <% BigInt](that: T): Ratio = this * Ratio(that)
   def /[T <% BigInt](that: T): Ratio = this / Ratio(that)
@@ -42,9 +44,7 @@ class Ratio(val n: BigInt, val d: BigInt) extends Ordered[Ratio] {
 
   override def toString = if (d > 1) (n.toString + " / " + d.toString) else (n.toString)
 
-  def toDouble = n.toDouble / d.toDouble
-
-  override def hashCode: Int = 37 * (37 * 17 * (n % BigInt(Int.MaxValue)).toInt) * (d % BigInt(Int.MaxValue)).toInt
+  override def hashCode: Int = 37 * (37 + (n % BigInt(Int.MaxValue)).toInt) + (d % BigInt(Int.MaxValue)).toInt
 
   override def equals(in: Any): Boolean = in match {
     case x: Ratio => (n == x.n && d == x.d) || (toDouble == x.toDouble)
@@ -53,5 +53,17 @@ class Ratio(val n: BigInt, val d: BigInt) extends Ordered[Ratio] {
     case x: BigInt => n == x && d == 1
     case _ => false
   }
+
+  def underlying(): AnyRef = (n,d)
+
+  def isWhole = false
+
+  def intValue = (n / d).toInt
+
+  def longValue = (n / d).toLong
+
+  def floatValue = (BigDecimal(n) / BigDecimal(d)).toFloat
+
+  def doubleValue = (BigDecimal(n) / BigDecimal(d)).toDouble
 
 }
