@@ -14,11 +14,13 @@ object Ratio {
 
   def apply(n: BigInt): Ratio = new Ratio(n, 1)
 
-  def apply(n: BigInt, d: BigInt): Ratio = {
-    val m = d.signum
-    val g: BigInt = if (n == 1 || d == 1) 1 else n.gcd(d)
-
-    if (g == 0) (new Ratio(0,0)) else (new Ratio(n * m / g, d * m / g))
+  def apply(n: BigInt, d: BigInt): Ratio = d.signum match {
+      case -1 => apply(-n, -d)
+      case 0 => throw new IllegalArgumentException("Zero denominator")
+      case 1 if (n == 1 || d == 1) => new Ratio(n, d)
+      case _ => 
+        val g = n.gcd(d)
+        new Ratio(n / g, d / g)
   }
 
   def unapply(in: Any): Option[(BigInt,BigInt)] = in match {
@@ -26,9 +28,13 @@ object Ratio {
     case _ => None
   }
 
+  def zero = new Ratio(0,1)
+
+  def one = new Ratio(1,1)
+
 }
 
-class Ratio(val n: BigInt, val d: BigInt) extends ScalaNumber with ScalaNumericConversions with Ordered[Ratio] {
+class Ratio private (val n: BigInt, val d: BigInt) extends ScalaNumber with ScalaNumericConversions with Ordered[Ratio] {
 
   def *[T <% BigInt](that: T): Ratio = this * Ratio(that)
   def /[T <% BigInt](that: T): Ratio = this / Ratio(that)
@@ -47,7 +53,7 @@ class Ratio(val n: BigInt, val d: BigInt) extends ScalaNumber with ScalaNumericC
   override def hashCode: Int = 37 * (37 + (n % BigInt(Int.MaxValue)).toInt) + (d % BigInt(Int.MaxValue)).toInt
 
   override def equals(in: Any): Boolean = in match {
-    case x: Ratio => (n == x.n && d == x.d) || (toDouble == x.toDouble)
+    case x: Ratio => n == x.n && d == x.d
     case x: Int => n == x && d == 1
     case x: Long => n == x && d == 1
     case x: BigInt => n == x && d == 1
