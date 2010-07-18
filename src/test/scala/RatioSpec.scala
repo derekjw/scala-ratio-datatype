@@ -1,6 +1,7 @@
 package net.fyrie
-package ratio
 package specs
+
+import ratio._
 
 import Generators._
 
@@ -17,7 +18,9 @@ class RatioSpec extends Specification with ScalaCheck {
     }
     "Perform operations with Ints" in {
       ((Ratio(2,3) * 3) == 2) must beTrue
+      ((3 * Ratio(2,3)) == 2) must beTrue
       ((Ratio(2,3) * 4) == 2) must beFalse
+      ((4 * Ratio(2,3)) == 2) must beFalse
     }
   }
   "Equality" should {

@@ -1,5 +1,10 @@
-package net.fyrie
-package ratio
+package net.fyrie {
+
+package object ratio {
+  implicit def bigInt2Ratio[T <% BigInt](in: T): Ratio = Ratio(in)
+}
+
+package ratio {
 
 import math._
 
@@ -35,11 +40,11 @@ object Ratio {
 }
 
 final class Ratio private (val n: BigInt, val d: BigInt) extends ScalaNumber with ScalaNumericConversions with Ordered[Ratio] {
-
-  def *[T <% BigInt](that: T): Ratio = Ratio(n * that, d)
-  def /[T <% BigInt](that: T): Ratio = Ratio(n, d * that)
-  def +[T <% BigInt](that: T): Ratio = Ratio(n + (that * d), d)
-  def -[T <% BigInt](that: T): Ratio = Ratio(n - (that * d), d)
+  
+  def *(that: BigInt): Ratio = Ratio(n * that, d)
+  def /(that: BigInt): Ratio = Ratio(n, d * that)
+  def +(that: BigInt): Ratio = Ratio(n + (that * d), d)
+  def -(that: BigInt): Ratio = Ratio(n - (that * d), d)
 
   def *(that: Ratio): Ratio = Ratio(n * that.n, d * that.d)
   def /(that: Ratio): Ratio = Ratio(n * that.d, d * that.n)
@@ -71,4 +76,7 @@ final class Ratio private (val n: BigInt, val d: BigInt) extends ScalaNumber wit
   def floatValue = (BigDecimal(n) / BigDecimal(d)).toFloat
 
   def doubleValue = (BigDecimal(n) / BigDecimal(d)).toDouble
+}
+
+}
 }

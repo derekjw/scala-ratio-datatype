@@ -1,4 +1,5 @@
 package net.fyrie
+package specs
 
 import ratio._
 
