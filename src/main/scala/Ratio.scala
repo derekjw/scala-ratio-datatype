@@ -53,7 +53,7 @@ final class Ratio private (val n: BigInt, val d: BigInt) extends ScalaNumber wit
 
   def compare(that: Ratio): Int = (n * that.d) compare (that.n * d)
 
-  override def toString = if (d > 1) (n.toString + " / " + d.toString) else (n.toString)
+  override def toString = if (d > 1) (n.toString + "/" + d.toString) else (n.toString)
 
   override def hashCode: Int = 37 * (37 + (n % BigInt(Int.MaxValue)).toInt) + (d % BigInt(Int.MaxValue)).toInt
 
