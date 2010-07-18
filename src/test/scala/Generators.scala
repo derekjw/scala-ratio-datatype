@@ -33,14 +33,14 @@ object Generators {
     result <- Gen.listOfN(size, Gen.frequency((1,genPrime),(9,genSmallPrime)))
   } yield result
 
-  def genBigRatio(factors: Int): Gen[Ratio[BigInt]] = genBigRatio(1,factors)
+  def genRatio(factors: Int): Gen[Ratio] = genRatio(1,factors)
 
-  def genBigRatio(minFactors: Int, maxFactors: Int): Gen[Ratio[BigInt]] = for {
+  def genRatio(minFactors: Int, maxFactors: Int): Gen[Ratio] = for {
     n <- genFactors(minFactors, maxFactors)
     d <- genFactors(minFactors, maxFactors)
   } yield {
-    n.zip(d).foldLeft(BigRatio.one){
-      case (r,(n,d)) => r * BigRatio(n, d)
+    n.zip(d).foldLeft(Ratio.one){
+      case (r,(n,d)) => r * Ratio(n, d)
     }
   }
 }

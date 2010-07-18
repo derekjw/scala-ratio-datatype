@@ -1,45 +1,59 @@
 package net.fyrie
 package ratio
 
-import math.{ScalaNumber, ScalaNumericConversions}
+import math._
 
 object Ratio {
 
-  def apply(in: String): Ratio[BigInt] = BigRatio(in)
+  def apply(in: String): Ratio =
+    in.split("/").toList match {
+      case n :: d :: Nil => apply(BigInt(n),BigInt(d))
+      case n :: Nil => apply(BigInt(n))
+      case _ => apply(0)
+    }
 
-  def apply(n: BigInt): Ratio[BigInt] = BigRatio(n)
+  def apply(n: BigInt): Ratio = new Ratio(n, 1)
 
-  def apply(n: BigInt, d: BigInt): Ratio[BigInt] = BigRatio(n, d)
+  def apply(n: BigInt, d: BigInt): Ratio = d.signum match {
+      case -1 => apply(-n, -d)
+      case 0 => throw new IllegalArgumentException("Zero denominator")
+      case 1 if (n == 1 || d == 1) => new Ratio(n, d)
+      case _ => 
+        val g = n.gcd(d)
+        new Ratio(n / g, d / g)
+  }
 
-  def unapply(in: Any): Option[(BigInt,BigInt)] = BigRatio.unapply(in)
+  def unapply(in: Any): Option[(BigInt,BigInt)] = in match {
+    case Ratio(n, d) => Some((n, d))
+    case _ => None
+  }
 
-  def zero = BigRatio.zero
+  val zero = new Ratio(0,1)
 
-  def one = BigRatio.one
+  val one = new Ratio(1,1)
 
 }
 
-sealed abstract class Ratio[A: Integral] (val n: A, val d: A) extends ScalaNumber with ScalaNumericConversions with Ordered[Ratio[A]] {
-  protected def ops: Integral[A] = implicitly
+final class Ratio private (val n: BigInt, val d: BigInt) extends ScalaNumber with ScalaNumericConversions with Ordered[Ratio] {
 
-  def *(that: Ratio[A]): Ratio[A]
-  def /(that: Ratio[A]): Ratio[A]
-  def +(that: Ratio[A]): Ratio[A]
-  def -(that: Ratio[A]): Ratio[A]
+  def *[T <% BigInt](that: T): Ratio = Ratio(n * that, d)
+  def /[T <% BigInt](that: T): Ratio = Ratio(n, d * that)
+  def +[T <% BigInt](that: T): Ratio = Ratio(n + (that * d), d)
+  def -[T <% BigInt](that: T): Ratio = Ratio(n - (that * d), d)
 
-  def *[T <% A](that: T): Ratio[A]
-  def /[T <% A](that: T): Ratio[A]
-  def +[T <% A](that: T): Ratio[A]
-  def -[T <% A](that: T): Ratio[A]
+  def *(that: Ratio): Ratio = Ratio(n * that.n, d * that.d)
+  def /(that: Ratio): Ratio = Ratio(n * that.d, d * that.n)
+  def +(that: Ratio): Ratio = Ratio((n * that.d) + (that.n * d), d * that.d)
+  def -(that: Ratio): Ratio = Ratio((n * that.d) - (that.n * d), d * that.d)
 
-  def compare(that: Ratio[A]): Int = ops.compare((ops.times(n, that.d)), (ops.times(that.n, d)))
+  def compare(that: Ratio): Int = (n * that.d) compare (that.n * d)
 
-  override def toString = if (ops.gt(d, ops.one)) (n.toString + " / " + d.toString) else (n.toString)
+  override def toString = if (d > 1) (n.toString + " / " + d.toString) else (n.toString)
 
-  //override def hashCode: Int = 37 * (37 + (n % BigInt(Int.MaxValue)).toInt) + (d % BigInt(Int.MaxValue)).toInt
+  override def hashCode: Int = 37 * (37 + (n % BigInt(Int.MaxValue)).toInt) + (d % BigInt(Int.MaxValue)).toInt
 
   override def equals(in: Any): Boolean = in match {
-    case x: Ratio[_] => n == x.n && d == x.d
+    case x: Ratio => n == x.n && d == x.d
     case x: Int => n == x && d == 1
     case x: Long => n == x && d == 1
     case x: BigInt => n == x && d == 1
@@ -49,49 +63,6 @@ sealed abstract class Ratio[A: Integral] (val n: A, val d: A) extends ScalaNumbe
   def underlying(): AnyRef = (n,d)
 
   def isWhole = false
-}
-
-object BigRatio {
-  def apply(in: String): Ratio[BigInt] =
-    in.split("/").toList match {
-      case n :: d :: Nil => apply(BigInt(n),BigInt(d))
-      case n :: Nil => apply(BigInt(n))
-      case _ => apply(0)
-    }
-
-  def apply(n: BigInt): Ratio[BigInt] = new BigRatio(n, 1)
-
-  def apply(n: BigInt, d: BigInt): Ratio[BigInt] = d.signum match {
-      case -1 => apply(-n, -d)
-      case 0 => throw new IllegalArgumentException("Zero denominator")
-      case 1 if (n == 1 || d == 1) => new BigRatio(n, d)
-      case _ => 
-        val g = n.gcd(d)
-        new BigRatio(n / g, d / g)
-  }
-
-  def unapply(in: Any): Option[(BigInt,BigInt)] = in match {
-    case BigRatio(n, d) => Some((n, d))
-    case _ => None
-  }
-
-  val zero = BigRatio(0,1)
-
-  val one = BigRatio(1,1)
-}
-
-final class BigRatio private (n: BigInt, d: BigInt) extends Ratio[BigInt](n, d) {
-  def *(that: Ratio[BigInt]): Ratio[BigInt] = BigRatio(n * that.n, d * that.d)
-  def /(that: Ratio[BigInt]): Ratio[BigInt] = BigRatio(n * that.d, d * that.n)
-  def +(that: Ratio[BigInt]): Ratio[BigInt] = BigRatio((n * that.d) + (that.n * d), d * that.d)
-  def -(that: Ratio[BigInt]): Ratio[BigInt] = BigRatio((n * that.d) - (that.n * d), d * that.d)
-
-  def *[T <% BigInt](that: T): Ratio[BigInt] = this * BigRatio(that)
-  def /[T <% BigInt](that: T): Ratio[BigInt] = this / BigRatio(that)
-  def +[T <% BigInt](that: T): Ratio[BigInt] = this + BigRatio(that)
-  def -[T <% BigInt](that: T): Ratio[BigInt] = this - BigRatio(that)
-
-  override def hashCode: Int = 37 * (37 + (n % BigInt(Int.MaxValue)).toInt) + (d % BigInt(Int.MaxValue)).toInt
 
   def intValue = (n / d).toInt
 
@@ -100,5 +71,4 @@ final class BigRatio private (n: BigInt, d: BigInt) extends Ratio[BigInt](n, d) 
   def floatValue = (BigDecimal(n) / BigDecimal(d)).toFloat
 
   def doubleValue = (BigDecimal(n) / BigDecimal(d)).toDouble
-
 }
