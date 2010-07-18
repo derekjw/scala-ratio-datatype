@@ -11,7 +11,7 @@ import math._
 object Ratio {
 
   def apply(in: String): Ratio =
-    in.split("/").toList match {
+    in.split("/").toList.map(_.trim) match {
       case n :: d :: Nil => apply(BigInt(n),BigInt(d))
       case n :: Nil => apply(BigInt(n))
       case _ => apply(0)
