@@ -10,16 +10,11 @@ import math._
 
 object Ratio {
 
-  def apply(in: String): Ratio =
-    in.split("/").toList.map(_.trim) match {
-      case n :: d :: Nil => apply(BigInt(n),BigInt(d))
-      case n :: Nil => apply(BigInt(n))
-      case _ => apply(0)
-    }
+  private val cache: Map[(BigInt, BigInt), Ratio] = Map() ++
+    (1 to 10).flatMap(n => (1 to 10).map(d => ((BigInt(n),BigInt(d)), create(n,d)))) ++
+    List(15, 30, 60, 125, 250, 500, 1000).map(d => ((BigInt(1), BigInt(d)), create(1, d)))
 
-  def apply(n: BigInt): Ratio = new Ratio(n, 1)
-
-  def apply(n: BigInt, d: BigInt): Ratio = d.signum match {
+  private def create(n: BigInt, d: BigInt) = d.signum match {
       case -1 => apply(-n, -d)
       case 0 => throw new IllegalArgumentException("Zero denominator")
       case 1 if (n == 1 || d == 1) => new Ratio(n, d)
@@ -28,14 +23,25 @@ object Ratio {
         new Ratio(n / g, d / g)
   }
 
+  def apply(in: String): Ratio =
+    in.split("/").toList.map(_.trim) match {
+      case n :: d :: Nil => apply(BigInt(n),BigInt(d))
+      case n :: Nil => apply(BigInt(n))
+      case _ => apply(0)
+    }
+
+  def apply(n: BigInt): Ratio = cache.getOrElse((n,1), new Ratio(n, 1))
+
+  def apply(n: BigInt, d: BigInt): Ratio = cache.getOrElse((n,d), create(n,d))
+
   def unapply(in: Any): Option[(BigInt,BigInt)] = in match {
     case Ratio(n, d) => Some((n, d))
     case _ => None
   }
 
-  val zero = new Ratio(0,1)
+  val zero = apply(0)
 
-  val one = new Ratio(1,1)
+  val one = apply(1)
 
 }
 
